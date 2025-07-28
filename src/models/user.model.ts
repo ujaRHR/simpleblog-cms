@@ -1,0 +1,71 @@
+import { sequelize } from "../config/db.ts";
+import { DataTypes, Model } from "sequelize";
+
+interface UserAttributes {
+  id?: string;
+  fullname: string;
+  email: string;
+  password: string;
+  role: "admin" | "user";
+  isVerified?: boolean;
+  lastLogin?: Date;
+}
+
+class User extends Model<UserAttributes> {}
+
+User.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      unique: true,
+      primaryKey: true,
+      defaultValue: DataTypes.UUIDV4
+    },
+    fullname: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    email: {
+      type: DataTypes.STRING(100),
+      unique: true,
+      allowNull: false,
+      validate: {
+        isEmail: true,
+        notEmpty: true
+      }
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [8, 128]
+      }
+    },
+    role: {
+      type: DataTypes.ENUM("user", "admin"),
+      defaultValue: "user",
+      allowNull: false
+    },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    lastLogin: {
+      type: DataTypes.DATE,
+      defaultValue: Date.now()
+    }
+  },
+  {
+    sequelize,
+    modelName: "User",
+    tableName: "users",
+    timestamps: true,
+    underscored: true
+  }
+);
+
+export default User;
