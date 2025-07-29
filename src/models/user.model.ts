@@ -5,6 +5,7 @@ interface UserAttributes {
   id?: string;
   fullname: string;
   email: string;
+  username: string;
   password: string;
   role: "admin" | "user";
   isVerified?: boolean;
@@ -34,6 +35,13 @@ User.init(
       allowNull: false,
       validate: {
         isEmail: true,
+        notEmpty: true
+      }
+    },
+    username: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: {
         notEmpty: true
       }
     },
