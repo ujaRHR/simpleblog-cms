@@ -41,6 +41,7 @@ User.init(
     username: {
       type: DataTypes.STRING(100),
       allowNull: false,
+      unique: true,
       validate: {
         notEmpty: true
       }
@@ -60,13 +61,11 @@ User.init(
     },
     isVerified: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false
+      defaultValue: false
     },
     lastLogin: {
       type: DataTypes.DATE,
-      defaultValue: () => new Date(),
-      allowNull: false
+      defaultValue: () => new Date()
     }
   },
   {
