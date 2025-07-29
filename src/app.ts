@@ -1,20 +1,21 @@
 import Koa from "koa";
+import bodyparser from "koa-bodyparser";
 import Router from "@koa/router";
+import auth from "./controllers/auth.controller.ts";
 
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
+const PROJECT_NAME = process.env.PROJECT_NAME || "Server";
 
 const app = new Koa();
 const router = new Router();
+app.use(bodyparser());
 
-router.get("/welcome", async (ctx) => {
-  ctx.body = {
-    message: "Say hello to Koa.js"
-  };
-});
+// Routing prefix setup
+router.use("/auth", auth.routes(), auth.allowedMethods());
 
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-app.listen(port, () => {
-  console.log("Server is listening to port:", port);
+app.listen(PORT, () => {
+  console.log(`${PROJECT_NAME} is listening to port ${PORT}`);
 });
