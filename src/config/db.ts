@@ -16,7 +16,9 @@ export const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
     | "mssql"
     | "db2"
     | "snowflake"
-}).sync({ alter: true });
+});
+
+await sequelize.sync({ alter: true });
 
 // Testing DB connection
 // try {
