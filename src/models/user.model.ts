@@ -7,7 +7,7 @@ interface UserAttributes {
   email: string;
   username: string;
   password: string;
-  role: "admin" | "user";
+  role?: "admin" | "user";
   isVerified?: boolean;
   lastLogin?: Date;
 }
@@ -39,19 +39,19 @@ User.init(
       }
     },
     username: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.STRING(30),
       allowNull: false,
       unique: true,
       validate: {
-        notEmpty: true
+        notEmpty: true,
+        is: /^[a-zA-Z0-9](?!.*[_.]{2})[a-zA-Z0-9._]{1,28}[a-zA-Z0-9]$/i
       }
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notEmpty: true,
-        len: [8, 128]
+        notEmpty: true
       }
     },
     role: {
