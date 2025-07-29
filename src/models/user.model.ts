@@ -56,7 +56,7 @@ User.init(
     },
     lastLogin: {
       type: DataTypes.DATE,
-      defaultValue: Date.now()
+      defaultValue: () => new Date()
     }
   },
   {
@@ -67,5 +67,7 @@ User.init(
     underscored: true
   }
 );
+
+await sequelize.sync({ alter: true });
 
 export default User;
