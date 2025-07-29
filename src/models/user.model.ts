@@ -60,11 +60,13 @@ User.init(
     },
     isVerified: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
+      allowNull: false
     },
     lastLogin: {
       type: DataTypes.DATE,
-      defaultValue: () => new Date()
+      defaultValue: () => new Date(),
+      allowNull: false
     }
   },
   {
