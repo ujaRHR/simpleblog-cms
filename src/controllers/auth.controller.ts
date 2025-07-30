@@ -2,6 +2,7 @@ import Router from "@koa/router";
 import User from "../models/user.model.ts";
 import { hashPassword, comparePassword } from "../utils/hash.ts";
 import { issueJWT } from "../utils/jwt.ts";
+import { authMiddleware } from "../middlewares/auth.middleware.ts";
 
 const auth = new Router();
 
@@ -119,7 +120,6 @@ auth.post("/login", async (ctx) => {
         const user = existingUser.dataValues;
 
         if (await comparePassword(password, user.password)) {
-          ctx.status = 200;
           ctx.body = {
             success: true,
             message: "User logged in successfully.",
@@ -134,7 +134,7 @@ auth.post("/login", async (ctx) => {
           ctx.status = 400;
           ctx.body = {
             success: false,
-            message: "Password doesn't match, try again"
+            message: "Wrong password, try again"
           };
         }
       }
@@ -146,6 +146,42 @@ auth.post("/login", async (ctx) => {
       };
     }
   } catch (error: any) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: "Something went wrong!"
+    };
+  }
+});
+
+auth.get("/me", authMiddleware, async (ctx) => {
+  try {
+    const existingUser = await User.findByPk(ctx.state.user.id);
+
+    if (!existingUser) {
+      ctx.status = 404;
+      ctx.body = {
+        success: false,
+        message: "User not found."
+      };
+      return;
+    }
+
+    const user = existingUser?.dataValues;
+
+    ctx.body = {
+      success: true,
+      message: "User info retrieved.",
+      user: {
+        fullname: user.fullname,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        status: user.isVerified ? "verified" : "not-verified",
+        lastLogin: user.lastLogin
+      }
+    };
+  } catch {
     ctx.status = 500;
     ctx.body = {
       success: false,

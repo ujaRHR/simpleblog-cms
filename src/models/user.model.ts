@@ -77,6 +77,4 @@ User.init(
   }
 );
 
-await sequelize.sync({ alter: true });
-
 export default User;
