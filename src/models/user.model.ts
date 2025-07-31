@@ -10,8 +10,8 @@ type UserAttributes = {
   role?: "admin" | "user";
   isVerified?: boolean;
   lastLogin?: Date;
-  passwordResetToken?: string;
-  passwordResetExpires?: Date;
+  passwordResetToken?: string | null;
+  passwordResetExpires?: Date | null;
 };
 
 class User extends Model<UserAttributes> {
@@ -23,8 +23,8 @@ class User extends Model<UserAttributes> {
   role?: "admin" | "user";
   isVerified?: boolean;
   lastLogin?: Date;
-  passwordResetToken?: string;
-  passwordResetExpires?: Date;
+  passwordResetToken?: string | null;
+  passwordResetExpires?: Date | null;
 }
 
 User.init(
