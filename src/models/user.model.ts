@@ -15,16 +15,16 @@ type UserAttributes = {
 };
 
 class User extends Model<UserAttributes> {
-  id!: string;
-  fullname!: string;
-  email!: string;
-  username!: string;
-  password!: string;
-  role?: "admin" | "user";
-  isVerified?: boolean;
-  lastLogin?: Date;
-  passwordResetToken?: string | null;
-  passwordResetExpires?: Date | null;
+  declare id: string;
+  declare fullname: string;
+  declare email: string;
+  declare username: string;
+  declare password: string;
+  declare role: "admin" | "user";
+  declare isVerified: boolean;
+  declare lastLogin: Date;
+  declare passwordResetToken: string | null;
+  declare passwordResetExpires: Date | null;
 }
 
 User.init(
