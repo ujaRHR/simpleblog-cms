@@ -47,9 +47,3 @@ export const resetToken = () => {
 
   return { rawToken, hashedToken };
 };
-
-export const verifyResetToken = (rawToken: string, hashedToken: string) => {
-  const newHashed = crypto.createHash("sha256").update(rawToken).digest("hex");
-
-  return newHashed === hashedToken;
-};
