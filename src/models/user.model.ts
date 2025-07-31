@@ -1,7 +1,7 @@
 import { sequelize } from "../config/db.ts";
 import { DataTypes, Model } from "sequelize";
 
-interface UserAttributes {
+type UserAttributes = {
   id?: string;
   fullname: string;
   email: string;
@@ -10,9 +10,22 @@ interface UserAttributes {
   role?: "admin" | "user";
   isVerified?: boolean;
   lastLogin?: Date;
-}
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
+};
 
-class User extends Model<UserAttributes> {}
+class User extends Model<UserAttributes> {
+  id!: string;
+  fullname!: string;
+  email!: string;
+  username!: string;
+  password!: string;
+  role?: "admin" | "user";
+  isVerified?: boolean;
+  lastLogin?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
+}
 
 User.init(
   {
@@ -61,11 +74,20 @@ User.init(
     },
     isVerified: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
+      allowNull: false
     },
     lastLogin: {
       type: DataTypes.DATE,
       defaultValue: () => new Date()
+    },
+    passwordResetToken: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    passwordResetExpires: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   },
   {
