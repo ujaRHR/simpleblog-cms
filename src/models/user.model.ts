@@ -10,7 +10,6 @@ type UserAttributes = {
   role?: "admin" | "user";
   isVerified?: boolean;
   emailVerifyToken?: string | null;
-  emailVerifyExpires?: string | null;
   lastLogin?: Date;
   passwordResetToken?: string | null;
   passwordResetExpires?: Date | null;
@@ -25,7 +24,6 @@ class User extends Model<UserAttributes> {
   declare role: "admin" | "user";
   declare isVerified: boolean;
   declare emailVerifyToken: string | null;
-  declare emailVerifyExpires: string | null;
   declare lastLogin: Date;
   declare passwordResetToken: string | null;
   declare passwordResetExpires: Date | null;
@@ -83,10 +81,6 @@ User.init(
     },
     emailVerifyToken: {
       type: DataTypes.STRING,
-      allowNull: true
-    },
-    emailVerifyExpires: {
-      type: DataTypes.DATE,
       allowNull: true
     },
     lastLogin: {
