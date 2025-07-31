@@ -3,7 +3,6 @@ import { verifyJWT } from "../utils/jwt.ts";
 export const authMiddleware = async (ctx: any, next: any) => {
   try {
     const authHeader = ctx.request.headers.authorization;
-    const token = authHeader?.split(" ")[1];
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       ctx.status = 401;
@@ -14,6 +13,7 @@ export const authMiddleware = async (ctx: any, next: any) => {
       return;
     }
 
+    const token = authHeader?.split(" ")[1];
     ctx.state.user = await verifyJWT(token);
     await next();
   } catch {
