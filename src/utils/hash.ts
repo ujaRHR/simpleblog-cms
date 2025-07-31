@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 
 export const hashPassword = async (password: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -35,4 +36,20 @@ export const comparePassword = async (
       }
     });
   });
+};
+
+export const resetToken = () => {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+
+  return { rawToken, hashedToken };
+};
+
+export const verifyResetToken = (rawToken: string, hashedToken: string) => {
+  const newHashed = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+  return newHashed === hashedToken;
 };
