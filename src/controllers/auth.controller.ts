@@ -1,76 +1,81 @@
 import Router from "@koa/router";
 import User from "../models/user.model.ts";
-import { hashPassword, comparePassword } from "../utils/hash.ts";
+import { hashPassword, comparePassword, resetToken } from "../utils/hash.ts";
 import { issueJWT } from "../utils/jwt.ts";
 import { authMiddleware } from "../middlewares/auth.middleware.ts";
+import {
+  sendEmail,
+  forgotEmailTemplate,
+  verifyEmailTemplate
+} from "../utils/mailer.ts";
+import crypto from "node:crypto";
+import { Op } from "sequelize";
 
 const auth = new Router();
 
-interface registerBody {
-  fullname: string;
-  email: string;
-  username: string;
-  password: string;
-}
+type bodyAttributes = {
+  id?: string;
+  fullname?: string;
+  email?: string;
+  username?: string;
+  password?: string;
+};
 
-interface loginBody {
-  email: string;
-  password: string;
-}
+type ResetPasswordBody = {
+  token: string;
+  newPassword: string;
+};
 
 auth.post("/register", async (ctx) => {
   try {
-    const body = ctx.request.body as registerBody;
+    const { fullname, email, username, password } = ctx.request
+      .body as bodyAttributes;
 
-    if (body) {
-      const { fullname, email, username, password } = body;
-
-      if (!fullname || !email || !username || !password) {
-        ctx.status = 400;
-        ctx.body = {
-          success: false,
-          message: "Missing required fields!"
-        };
-      } else {
-        if (password.length < 8) {
-          ctx.status = 400;
-          ctx.body = {
-            success: false,
-            message: "Password must be at least 8 characters long."
-          };
-          return;
-        }
-
-        const hashedPassword: string = await hashPassword(password);
-        const user = await User.create({
-          fullname,
-          email,
-          username,
-          password: hashedPassword
-        });
-
-        if (user) {
-          ctx.status = 201;
-          ctx.body = {
-            success: true,
-            message: "User created successfully.",
-            user: { fullname, email, username }
-          };
-        } else {
-          ctx.status = 500;
-          ctx.body = {
-            success: false,
-            message: "Failed to create a new user."
-          };
-        }
-      }
-    } else {
+    if (!fullname || !email || !username || !password) {
       ctx.status = 400;
       ctx.body = {
         success: false,
-        message: "Request body is missing."
+        message: "Missing required fields!"
       };
+      return;
     }
+
+    if (password.length < 8) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: "Password must be at least 8 characters long."
+      };
+      return;
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    const { rawToken, hashedToken } = resetToken();
+    const protocol = ctx.request.protocol;
+    const host = ctx.request.header.host;
+    const origin = `${protocol}://${host}`;
+
+    await User.create({
+      fullname,
+      email,
+      username,
+      password: hashedPassword,
+      emailVerifyToken: hashedToken
+    });
+
+    ctx.status = 201;
+    ctx.body = {
+      success: true,
+      message: "User created successfully, kindly verify your email.",
+      user: { fullname, email, username }
+    };
+
+    sendEmail(
+      email,
+      "Verify your email",
+      verifyEmailTemplate(origin, rawToken)
+    );
   } catch (error: any) {
     const isUnique = error.name === "SequelizeUniqueConstraintError";
     const isValidation = error.name === "SequelizeValidationError";
@@ -79,9 +84,9 @@ auth.post("/register", async (ctx) => {
     ctx.body = {
       success: false,
       message: isUnique
-        ? "An user already exist with this username or email"
+        ? "A user already exists with this username or email."
         : isValidation
-        ? "Invalid username or email validation"
+        ? "Invalid username or email format."
         : "Something went wrong!"
     };
   }
@@ -89,68 +94,49 @@ auth.post("/register", async (ctx) => {
 
 auth.post("/login", async (ctx) => {
   try {
-    const body = ctx.request.body as loginBody;
+    const { email, password } = ctx.request.body as bodyAttributes;
 
-    if (body) {
-      const { email, password } = body;
-
-      if (!email || !password) {
-        ctx.status = 400;
-        ctx.body = {
-          success: false,
-          message: "Missing required fields!"
-        };
-        return;
-      } else {
-        const existingUser = await User.findOne({
-          where: {
-            email: email
-          }
-        });
-
-        if (!existingUser) {
-          ctx.status = 404;
-          ctx.body = {
-            success: false,
-            message: "An user doesn't exist with this email!"
-          };
-          return;
-        }
-
-        const user = existingUser.dataValues;
-
-        if (await comparePassword(password, user.password)) {
-          ctx.body = {
-            success: true,
-            message: "User logged in successfully.",
-            token: await issueJWT({
-              id: user.id,
-              fullname: user.fullname,
-              email: user.email,
-              username: user.username
-            })
-          };
-        } else {
-          ctx.status = 400;
-          ctx.body = {
-            success: false,
-            message: "Wrong password, try again"
-          };
-        }
-      }
-    } else {
+    if (!email || !password) {
       ctx.status = 400;
+      ctx.body = { success: false, message: "Missing required fields!" };
+      return;
+    }
+
+    const existingUser = await User.findOne({ where: { email } });
+
+    if (!existingUser) {
+      ctx.status = 404;
       ctx.body = {
         success: false,
-        message: "Request body is missing."
+        message: "User doesn't exist with this email!"
       };
+      return;
     }
-  } catch (error: any) {
-    ctx.status = 500;
+
+    const user = existingUser.dataValues;
+
+    const passwordMatch = await comparePassword(password, user.password);
+    if (!passwordMatch) {
+      ctx.status = 400;
+      ctx.body = { success: false, message: "Wrong password, try again." };
+      return;
+    }
+
+    const token = await issueJWT({
+      id: user.id,
+      fullname: user.fullname,
+      email: user.email,
+      username: user.username
+    });
+
     ctx.body = {
-      success: false,
-      message: "Something went wrong!"
+      success: true,
+      message: "User logged in successfully.",
+      token
     };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = { success: false, message: "Something went wrong!" };
   }
 });
 
@@ -182,6 +168,165 @@ auth.get("/me", authMiddleware, async (ctx) => {
       }
     };
   } catch {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: "Something went wrong!"
+    };
+  }
+});
+
+auth.post("/forgot-password", async (ctx) => {
+  try {
+    const body = ctx.request.body as bodyAttributes;
+    const email = body?.email;
+
+    if (!email) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: "Missing required email field!"
+      };
+      return;
+    }
+    const existingUser = await User.findOne({ where: { email } });
+
+    if (!existingUser) {
+      ctx.status = 404;
+      ctx.body = {
+        success: false,
+        message: "No user found with this email."
+      };
+      return;
+    }
+
+    const { rawToken, hashedToken } = resetToken();
+    const protocol = ctx.request.protocol;
+    const host = ctx.request.header.host;
+    const origin = `${protocol}://${host}`;
+
+    await User.update(
+      {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: new Date(Date.now() + 15 * 60 * 1000)
+      },
+      { where: { email } }
+    );
+    ctx.body = {
+      success: true,
+      message: "A password reset link has been sent to your email."
+    };
+
+    sendEmail(email, "Reset Password", forgotEmailTemplate(origin, rawToken));
+  } catch (error: any) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: "Something went wrong!"
+    };
+  }
+});
+
+auth.post("/reset-password", async (ctx) => {
+  try {
+    const { token, newPassword } = ctx.request.body as ResetPasswordBody;
+
+    if (!token || !newPassword) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: "Missing required fields!"
+      };
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: "Password must be at least 8 characters long."
+      };
+      return;
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+      where: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: {
+          [Op.gt]: new Date()
+        }
+      }
+    });
+
+    if (!user) {
+      ctx.status = 404;
+      ctx.body = {
+        success: false,
+        message: "Invalid or expired token."
+      };
+      return;
+    }
+
+    user.password = await hashPassword(newPassword);
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+
+    await user.save();
+
+    ctx.body = {
+      success: true,
+      message: "Password reset has been successful."
+    };
+  } catch (error: any) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: "Something went wrong!"
+    };
+  }
+});
+
+auth.get("/verify-email", async (ctx) => {
+  try {
+    const token = Array.isArray(ctx.request.query.token)
+      ? ctx.request.query.token[0]
+      : ctx.request.query.token;
+
+    if (!token) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: "Token is missing!"
+      };
+      return;
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+      where: {
+        emailVerifyToken: hashedToken
+      }
+    });
+
+    if (!user) {
+      ctx.status = 400;
+      ctx.body = { success: false, message: "Invalid token or expired." };
+      return;
+    }
+
+    user.isVerified = true;
+    user.emailVerifyToken = null;
+
+    await user.save();
+
+    ctx.body = {
+      success: true,
+      message: "Email verified successfully."
+    };
+  } catch (error: any) {
     ctx.status = 500;
     ctx.body = {
       success: false,
