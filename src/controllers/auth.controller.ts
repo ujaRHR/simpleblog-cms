@@ -1,8 +1,6 @@
-import Router from "@koa/router";
 import User from "../models/user.model.ts";
 import { hashPassword, comparePassword, resetToken } from "../utils/hash.ts";
 import { issueJWT } from "../utils/jwt.ts";
-import { authMiddleware } from "../middlewares/auth.middleware.ts";
 import {
   sendEmail,
   forgotEmailTemplate,
@@ -10,8 +8,6 @@ import {
 } from "../utils/mailer.ts";
 import crypto from "node:crypto";
 import { Op } from "sequelize";
-
-const auth = new Router();
 
 type bodyAttributes = {
   id?: string;
@@ -26,7 +22,10 @@ type ResetPasswordBody = {
   newPassword: string;
 };
 
-auth.post("/register", async (ctx) => {
+// scaffolding the controllers in 'auth' object
+export const auth: Record<string, any> = {};
+
+auth.register = async (ctx: any) => {
   try {
     const { fullname, email, username, password } = ctx.request
       .body as bodyAttributes;
@@ -90,9 +89,9 @@ auth.post("/register", async (ctx) => {
         : "Something went wrong!"
     };
   }
-});
+};
 
-auth.get("/verify-email", async (ctx) => {
+auth.verifyEmail = async (ctx: any) => {
   try {
     const token = Array.isArray(ctx.request.query.token)
       ? ctx.request.query.token[0]
@@ -137,9 +136,9 @@ auth.get("/verify-email", async (ctx) => {
       message: "Something went wrong!"
     };
   }
-});
+};
 
-auth.post("/login", async (ctx) => {
+auth.login = async (ctx: any) => {
   try {
     const { email, password } = ctx.request.body as bodyAttributes;
 
@@ -185,9 +184,9 @@ auth.post("/login", async (ctx) => {
     ctx.status = 500;
     ctx.body = { success: false, message: "Something went wrong!" };
   }
-});
+};
 
-auth.get("/me", authMiddleware, async (ctx) => {
+auth.me = async (ctx: any) => {
   try {
     const existingUser = await User.findByPk(ctx.state.user.id);
 
@@ -221,9 +220,9 @@ auth.get("/me", authMiddleware, async (ctx) => {
       message: "Something went wrong!"
     };
   }
-});
+};
 
-auth.post("/forgot-password", async (ctx) => {
+auth.forgotPassword = async (ctx: any) => {
   try {
     const body = ctx.request.body as bodyAttributes;
     const email = body?.email;
@@ -272,9 +271,9 @@ auth.post("/forgot-password", async (ctx) => {
       message: "Something went wrong!"
     };
   }
-});
+};
 
-auth.post("/reset-password", async (ctx) => {
+auth.resetPassword = async (ctx: any) => {
   try {
     const { token, newPassword } = ctx.request.body as ResetPasswordBody;
 
@@ -333,6 +332,4 @@ auth.post("/reset-password", async (ctx) => {
       message: "Something went wrong!"
     };
   }
-});
-
-export default auth;
+};
