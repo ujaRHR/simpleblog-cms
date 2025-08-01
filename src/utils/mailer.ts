@@ -29,7 +29,7 @@ export const sendEmail = async (
 };
 
 export const forgotEmailTemplate = (host: string, token: string) => {
-  const resetLink = `${host}/reset-password?token=${token}`;
+  const resetLink = `${host}/auth/reset-password?token=${token}`;
   return `
     <div style="font-family: Arial, sans-serif; padding: 20px;">
       <h2>Password Reset Request</h2>
@@ -44,7 +44,7 @@ export const forgotEmailTemplate = (host: string, token: string) => {
 };
 
 export const verifyEmailTemplate = (host: string, token: string) => {
-  const verifyLink = `${host}/verify-email?token=${token}`;
+  const verifyLink = `${host}/auth/verify-email?token=${token}`;
   return `
     <div style="font-family: Arial, sans-serif; padding: 20px;">
       <h2>Email Verification</h2>
