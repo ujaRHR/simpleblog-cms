@@ -2,12 +2,12 @@ import Router from "@koa/router";
 import { authMiddleware } from "../middlewares/auth.middleware.ts";
 import { auth } from "../controllers/auth.controller.ts";
 
-export const authRouterr = new Router();
+export const authRouter = new Router();
 
 // specific paths for /auth/.... route
-authRouterr.post("/register", auth.register);
-authRouterr.get("/verify-email", auth.verifyEmail);
-authRouterr.post("/login", auth.login);
-authRouterr.get("/me", authMiddleware, auth.register);
-authRouterr.post("/forgot-password", auth.forgotPassword);
-authRouterr.post("/reset-password", auth.resetPassword);
+authRouter.post("/register", auth.register);
+authRouter.get("/verify-email", auth.verifyEmail);
+authRouter.post("/login", auth.login);
+authRouter.get("/me", authMiddleware, auth.register);
+authRouter.post("/forgot-password", auth.forgotPassword);
+authRouter.post("/reset-password", auth.resetPassword);
