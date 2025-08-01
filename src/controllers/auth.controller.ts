@@ -92,6 +92,53 @@ auth.post("/register", async (ctx) => {
   }
 });
 
+auth.get("/verify-email", async (ctx) => {
+  try {
+    const token = Array.isArray(ctx.request.query.token)
+      ? ctx.request.query.token[0]
+      : ctx.request.query.token;
+
+    if (!token) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: "Token is missing!"
+      };
+      return;
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+      where: {
+        emailVerifyToken: hashedToken
+      }
+    });
+
+    if (!user) {
+      ctx.status = 400;
+      ctx.body = { success: false, message: "Invalid token or expired." };
+      return;
+    }
+
+    user.isVerified = true;
+    user.emailVerifyToken = null;
+
+    await user.save();
+
+    ctx.body = {
+      success: true,
+      message: "Email verified successfully."
+    };
+  } catch (error: any) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: "Something went wrong!"
+    };
+  }
+});
+
 auth.post("/login", async (ctx) => {
   try {
     const { email, password } = ctx.request.body as bodyAttributes;
@@ -278,53 +325,6 @@ auth.post("/reset-password", async (ctx) => {
     ctx.body = {
       success: true,
       message: "Password reset has been successful."
-    };
-  } catch (error: any) {
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      message: "Something went wrong!"
-    };
-  }
-});
-
-auth.get("/verify-email", async (ctx) => {
-  try {
-    const token = Array.isArray(ctx.request.query.token)
-      ? ctx.request.query.token[0]
-      : ctx.request.query.token;
-
-    if (!token) {
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        message: "Token is missing!"
-      };
-      return;
-    }
-
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-
-    const user = await User.findOne({
-      where: {
-        emailVerifyToken: hashedToken
-      }
-    });
-
-    if (!user) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: "Invalid token or expired." };
-      return;
-    }
-
-    user.isVerified = true;
-    user.emailVerifyToken = null;
-
-    await user.save();
-
-    ctx.body = {
-      success: true,
-      message: "Email verified successfully."
     };
   } catch (error: any) {
     ctx.status = 500;
