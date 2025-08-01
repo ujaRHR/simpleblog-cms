@@ -1,4 +1,14 @@
 import { verifyJWT } from "../utils/jwt.ts";
+import User from "../models/user.model.ts";
+
+type JWTPayload = {
+  id?: string;
+  fullname?: string;
+  email?: string;
+  role?: string;
+  iat?: number;
+  exp?: number;
+};
 
 export const authMiddleware = async (ctx: any, next: any) => {
   try {
@@ -13,8 +23,21 @@ export const authMiddleware = async (ctx: any, next: any) => {
       return;
     }
 
-    const token = authHeader?.split(" ")[1];
-    ctx.state.user = await verifyJWT(token);
+    const token = authHeader.split(" ")[1];
+    const decoded = (await verifyJWT(token)) as JWTPayload;
+
+    const user = await User.findByPk(decoded.id);
+
+    if (!user) {
+      ctx.status = 401;
+      ctx.body = {
+        success: false,
+        message: "User not found."
+      };
+      return;
+    }
+
+    ctx.state.user = user;
     await next();
   } catch {
     ctx.status = 401;
