@@ -1,7 +1,7 @@
 import Koa from "koa";
 import bodyparser from "koa-bodyparser";
 import Router from "@koa/router";
-import auth from "./controllers/auth.controller.ts";
+import { authRouterr } from "./routes/auth.route.ts";
 
 const PORT = process.env.PORT || 3000;
 const PROJECT_NAME = process.env.PROJECT_NAME || "Server";
@@ -11,7 +11,10 @@ const router = new Router();
 app.use(bodyparser());
 
 // Routing prefix setup
-router.use("/auth", auth.routes(), auth.allowedMethods());
+router.use("/auth", authRouterr.routes(), authRouterr.allowedMethods());
+// router.use("/auth", authRouterr.routes(), authRouterr.allowedMethods());
+// router.use("/auth", authRouterr.routes(), authRouterr.allowedMethods());
+// router.use("/auth", authRouterr.routes(), authRouterr.allowedMethods());
 
 app.use(router.routes());
 app.use(router.allowedMethods());
