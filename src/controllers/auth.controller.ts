@@ -1,4 +1,4 @@
-import User from "../models/user.model.ts";
+import { User } from "../models/index.ts";
 import { hashPassword, comparePassword, resetToken } from "../utils/hash.ts";
 import { issueJWT } from "../utils/jwt.ts";
 import {

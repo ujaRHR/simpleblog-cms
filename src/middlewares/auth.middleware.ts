@@ -37,6 +37,15 @@ export const authMiddleware = async (ctx: any, next: any) => {
       return;
     }
 
+    if (!user.isVerified) {
+      ctx.status = 403;
+      ctx.body = {
+        success: false,
+        message: "Please verify your email to continue."
+      };
+      return;
+    }
+
     ctx.state.user = user;
     await next();
   } catch {

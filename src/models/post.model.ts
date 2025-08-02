@@ -40,7 +40,6 @@ Post.init(
     },
     slug: {
       type: DataTypes.STRING(255),
-      unique: true,
       allowNull: false
     },
     authorId: {
@@ -73,6 +72,13 @@ Post.init(
     sequelize,
     modelName: "Post",
     tableName: "posts",
+    indexes: [
+      {
+        unique: true,
+        fields: ["slug", "author_id"]
+      }
+    ],
+
     timestamps: true,
     underscored: true
   }
