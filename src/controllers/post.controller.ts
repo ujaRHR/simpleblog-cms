@@ -1,6 +1,5 @@
 import { Op } from "sequelize";
-import { Post } from "../models/index.ts";
-import { User } from "../models/index.ts";
+import { Post, User } from "../models/index.ts";
 import { mdToHtml } from "../utils/md2Html.ts";
 
 type bodyAttributes = {
