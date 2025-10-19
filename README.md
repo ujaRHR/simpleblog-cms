@@ -126,5 +126,6 @@ SMTP_PASS=Your_Ethereal_Password
 pnpm run dev
 ```
 
+#### Overall Project Details -> [Markdown Note-taking App](https://roadmap.sh/projects/markdown-note-taking-app)
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
